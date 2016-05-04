@@ -1,7 +1,15 @@
+"""
+TextReplacer 
+
+Allows the user to replace the text within a single file (or all of the files within a single directory).
+
+Requires Python 3
+"""
 import os, fileinput
 
 #List to contain all characters/words defined by the user to be stripped from a document
-initlist = mylist = []
+initlist = []
+dictionary = {}
 
 """
 init()
@@ -39,11 +47,19 @@ def init():
 """
 append()
 
-Appends words/characters to a global list.
+Appends words/characters to a global dictionary, mapping input to text to be replaced by. There are exception handlers in place to prevent blank input from wiping a
+file clean of text (and instead treats blanks as deletions).
 """
 def append():
-    word = input("Designate a word or a set of characters to strip from the document: ")
-    mylist.append(word)
+    try:
+        before = input("Designate a word or a set of characters to replace: ")
+    except SyntaxError:
+        before = ""
+    try:
+        after = input("Designate a word or a set of characters to replace " + before +" with (if you want to remove it completely, just leave the text field blank): ")
+    except SyntaxError:
+        after = ""
+    dictionary[before] = after
     cont2 = input("Would you like to designate another word or a set of characters to strip from the document? y/n: ")
     if (cont2 is "y") or (cont2 is "Y"):
         append()
@@ -53,18 +69,25 @@ print ("This application will strip inserted characters from a designated docume
 initlist = init()
 append()
 
+text = "line"
+for b, a in dictionary.items():
+    text += ".replace(%r, %r)" % (b, a)
+text += ".strip()"
+
 #Open/Write to file
 #Single-file operations
 if initlist[0] is "1":
-    with fileinput.FileInput(initlist[1] + "\\" + initlist[2], inplace=1) as myfile:
+    path = initlist[1] + "\\" + initlist[2]
+    with fileinput.FileInput(path, inplace=1) as myfile:
         for line in myfile:
-            for i in mylist:
-                print (line.replace(i, "").strip())
+            print (eval(text))
 #Directory-based operations
 elif initlist[0] is "2":
+    path = initlist[1]
     for filename in os.listdir(initlist[1]):
-        with fileinput.FileInput(initlist[1] + "\\" + filename, inplace=1) as myfile:
+        with fileinput.FileInput(path + "\\" + filename, inplace=1) as myfile:
             for line in myfile:
-                for i in mylist:
-                    print (line.replace(i, "").strip())
+                print (eval(text))
 print ("Done!")
+#Opens the file if a single file is modified, and opens the file explorer where the directory had its files modified
+subprocess.call(r"explorer " + path, shell=True)
